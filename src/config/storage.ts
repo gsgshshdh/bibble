@@ -1,0 +1,168 @@
+﻿import fs from "fs";
+import path from "path";
+import os from "os";
+
+// Config paths
+export const CONFIG_DIR = path.join(os.homedir(), ".bibble");
+export const HISTORY_DIR = path.join(CONFIG_DIR, "history");
+export const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
+
+// Create config directory if it doesn't exist
+export function ensureConfigDirExists(): void {
+  if (!fs.existsSync(CONFIG_DIR)) {
+    fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  }
+  
+  if (!fs.existsSync(HISTORY_DIR)) {
+    fs.mkdirSync(HISTORY_DIR, { recursive: true });
+  }
+}
+
+// Configuration type
+export interface BibbleConfig {
+  apis: {
+    openai: {
+      apiKey?: string;
+      baseUrl: string;
+      defaultModel: string;
+    }
+  };
+  ui: {
+    colorOutput: boolean;
+    useMarkdown: boolean;
+  };
+  mcpServers: Array<{
+    name: string;
+    command: string;
+    args: string[];
+    env?: Record<string, string>;
+    enabled: boolean;
+  }>;
+  chat: {
+    saveHistory: boolean;
+    maxHistoryItems: number;
+    systemPrompt: string;
+    userGuidelines?: string;
+  };
+  models: Array<{
+    id: string;
+    provider: string;
+    name: string;
+    maxTokens?: number;
+    temperature?: number;
+  }>;
+}
+
+// Default configuration
+export const defaultConfig: BibbleConfig = {
+  apis: {
+    openai: {
+      apiKey: undefined,
+      baseUrl: "https://api.openai.com/v1",
+      defaultModel: "gpt-3.5-turbo"
+    }
+  },
+  ui: {
+    colorOutput: true,
+    useMarkdown: true
+  },
+  mcpServers: [],
+  chat: {
+    saveHistory: true,
+    maxHistoryItems: 50,
+    systemPrompt: "You are bibble, a helpful and friendly AI assistant."
+  },
+  models: [
+    {
+      id: "gpt-3.5-turbo",
+      provider: "openai",
+      name: "GPT-3.5 Turbo",
+      maxTokens: 2048,
+      temperature: 0.7
+    },
+    {
+      id: "gpt-4",
+      provider: "openai",
+      name: "GPT-4",
+      maxTokens: 4096,
+      temperature: 0.7
+    }
+  ]
+};
+
+/**
+ * Load configuration from file
+ * @returns Configuration object
+ */
+export function loadConfig(): BibbleConfig {
+  if (!fs.existsSync(CONFIG_FILE)) {
+    return defaultConfig;
+  }
+  
+  try {
+    const content = fs.readFileSync(CONFIG_FILE, "utf8");
+    return JSON.parse(content) as BibbleConfig;
+  } catch (error) {
+    console.error("Error loading configuration:", error);
+    return defaultConfig;
+  }
+}
+
+/**
+ * Save configuration to file
+ * @param config Configuration object
+ */
+export function saveConfig(config: BibbleConfig): void {
+  try {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
+  } catch (error) {
+    console.error("Error saving configuration:", error);
+  }
+}
+
+/**
+ * Get a configuration value by path
+ * @param obj Object to get value from
+ * @param path Dot-notation path to value
+ * @param defaultValue Default value if not found
+ * @returns Value at path or default value
+ */
+export function getValueByPath<T>(obj: any, path: string, defaultValue?: T): T {
+  const keys = path.split(".");
+  let current = obj;
+  
+  for (const key of keys) {
+    if (current === undefined || current === null) {
+      return defaultValue as T;
+    }
+    current = current[key];
+  }
+  
+  return (current === undefined) ? (defaultValue as T) : (current as T);
+}
+
+/**
+ * Set a configuration value by path
+ * @param obj Object to set value in
+ * @param path Dot-notation path to value
+ * @param value Value to set
+ */
+export function setValueByPath(obj: any, path: string, value: any): void {
+  const keys = path.split(".");
+  const lastKey = keys.pop();
+  
+  if (!lastKey) {
+    return;
+  }
+  
+  let current = obj;
+  
+  for (const key of keys) {
+    if (current[key] === undefined || current[key] === null) {
+      current[key] = {};
+    }
+    current = current[key];
+  }
+  
+  current[lastKey] = value;
+}
