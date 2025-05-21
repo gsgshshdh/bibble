@@ -8,7 +8,10 @@ Bibble is a command-line interface (CLI) chatbot application that integrates wit
 
 Bibble provides a terminal-based interface for interacting with AI language models, with support for:
 
-- Chat sessions with OpenAI models (GPT-4.1, o4-mini, etc)
+- Chat sessions with multiple LLM providers:
+  - OpenAI models (GPT-4.1, o4-mini, etc.)
+  - Anthropic models (Claude 3.7 Sonnet, 3.5 Sonnet, 3.5 Haiku, 3 Opus)
+  - OpenAI-compatible endpoints for third-party services
 - Tool use through the Model Context Protocol (MCP)
 - Configuration management with dot-notation access
 - Chat history tracking, export, and import
@@ -46,7 +49,8 @@ Bibble follows a modular architecture with clear separation of concerns:
 │   │   ├── agent.ts      # Agent class for managing conversations with tools
 │   │   └── client.ts     # MCP client for connecting to servers
 │   ├── llm/              # LLM integration
-│   │   └── client.ts     # LLM client for OpenAI API
+│   │   ├── client.ts     # LLM client for multiple providers
+│   │   └── anthropic.ts  # Anthropic API client
 │   ├── ui/               # Terminal UI components
 │   │   ├── chat.ts       # Chat UI for interactive sessions
 │   │   ├── colors.ts     # Terminal color utilities
@@ -92,7 +96,7 @@ The configuration system supports:
 
 ### LLM Integration
 
-Bibble integrates with OpenAI's API to provide chat functionality, supporting different models like GPT-4.1 and o4-mini. The `LlmClient` class handles:
+Bibble integrates with multiple LLM providers through the `LlmClient` class, which handles:
 
 - Chat completion requests
 - Streaming responses
@@ -100,9 +104,38 @@ Bibble integrates with OpenAI's API to provide chat functionality, supporting di
 - Tool integration
 - Model-specific parameters
 
+#### OpenAI Integration
+
 The application supports both traditional OpenAI models and the newer o-series models (o1, o1-pro, o3, o3-mini, o4-mini), automatically adjusting parameters based on the model type:
 - Traditional models use `temperature` and `maxTokens` parameters
 - O-series models use `reasoningEffort` and `maxCompletionTokens` parameters
+
+#### Anthropic Integration
+
+Bibble also supports Anthropic's Claude models:
+- Claude 3.7 Sonnet
+- Claude 3.5 Sonnet
+- Claude 3.5 Haiku
+- Claude 3 Opus
+
+These models support parameters like:
+- `temperature` and `maxTokens` for all Claude models
+- `thinking` mode for Claude 3.7 Sonnet with `type: "enabled"` and `budget_tokens: 16000`
+- `topP` and `topK` for advanced sampling control
+
+Recent improvements to the Anthropic integration include:
+- Simplified AnthropicStreamChunk interface for better type safety
+- Dynamic tool documentation with categorization by function type
+- Tool parameter validation with prefilled arguments for better error handling
+- Retry logic with exponential backoff for API overloaded errors
+- Improved MCP tool usage documentation in system prompt
+
+#### OpenAI-Compatible Endpoints
+
+For third-party services that implement the OpenAI API, Bibble provides:
+- Configurable base URL
+- Optional API key requirement
+- Default model selection
 
 ### Agent Implementation
 
@@ -188,13 +221,33 @@ MCP (Model Context Protocol) allows language models to use external tools. The p
 1. **Server Configuration**: Users can configure MCP servers using `bibble config mcp-servers`
 2. **Tool Discovery**: When Bibble starts, it connects to configured MCP servers and discovers available tools
 3. **Tool Registration**: Available tools are registered with the Agent and made available to the language model
-4. **Tool Calling Process**:
+4. **Tool Documentation**: Tools are documented with categorization by function type (File Operations, Task Management, Search, etc.)
+5. **Tool Calling Process**:
    - The language model decides to call a tool based on the user's request
    - Bibble identifies the appropriate MCP server for the requested tool
    - The tool call is sent to the server with the necessary arguments
    - The server processes the request and returns a response
    - Bibble adds the tool response to the conversation
    - The conversation continues with the LLM, which can now use the tool's response
+
+### Tool Documentation and Validation
+
+Bibble implements comprehensive tool documentation and validation to improve tool usage:
+
+1. **Dynamic Tool Documentation**:
+   - Tools are categorized by function type (File Operations, Task Management, Search, etc.)
+   - Each tool includes a description, required parameters, and example usage
+   - Documentation is generated at runtime and included in the system prompt
+
+2. **Parameter Validation**:
+   - Tool calls are validated to ensure all required parameters are provided
+   - For Claude models, validation includes checking parameter types and formats
+   - When validation fails, helpful error messages with prefilled examples are provided
+
+3. **Error Handling**:
+   - Retry logic with exponential backoff for API overloaded errors
+   - User-friendly error messages for API limitations
+   - Graceful handling of tool call failures
 
 ### MCP Server Implementation
 
@@ -237,16 +290,32 @@ The package is published on npm as `@pinkpixel/bibble` and includes all necessar
 
 ### Configuration
 
-Set up your OpenAI API key:
+Run the setup wizard for first-time configuration:
 
 ```bash
-bibble config api-key
+bibble setup
 ```
 
-Configure MCP servers (optional):
+The setup wizard will guide you through:
+- Selecting your default provider (OpenAI, Anthropic, or OpenAI-compatible)
+- Configuring API keys
+- Selecting your default model
+- Setting UI preferences
+
+You can also configure individual settings:
 
 ```bash
+# Set up API keys
+bibble config api-key
+
+# Configure OpenAI-compatible endpoints
+bibble config openai-compatible
+
+# Configure MCP servers
 bibble config mcp-servers
+
+# Configure UI preferences
+bibble config ui
 ```
 
 ### Basic Usage

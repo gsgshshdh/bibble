@@ -115,7 +115,7 @@ export function setupConfigCommand(program: Command): void {
           type: "list",
           name: "provider",
           message: "Select API provider:",
-          choices: ["openai"],
+          choices: ["openai", "anthropic"],
         },
       ]);
 
@@ -138,7 +138,7 @@ export function setupConfigCommand(program: Command): void {
     .description("Set the default provider to use")
     .action(async () => {
       // Get available providers
-      const providers = ["openai"];
+      const providers = ["openai", "anthropic"];
 
       // Check if openaiCompatible is configured
       const openaiCompatibleBaseUrl = config.get("apis.openaiCompatible.baseUrl", "");

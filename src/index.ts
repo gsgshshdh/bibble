@@ -8,6 +8,7 @@ import { setupHistoryCommand } from "./commands/history.js";
 
 // Config initialization
 import { ensureConfigDirExists } from "./config/storage.js";
+import { isSetupNeeded, runSetupWizard } from "./config/setup.js";
 
 // Create CLI program
 const program = new Command();
@@ -16,7 +17,7 @@ const program = new Command();
 program
   .name("bibble")
   .description("CLI chatbot with MCP support")
-  .version("1.0.0");
+  .version("1.2.1");
 
 // Initialize configuration
 ensureConfigDirExists();
@@ -26,8 +27,23 @@ setupChatCommand(program);
 setupConfigCommand(program);
 setupHistoryCommand(program);
 
+// Setup command
+program
+  .command("setup")
+  .description("Run the setup wizard")
+  .action(async () => {
+    await runSetupWizard();
+  });
+
 // Default command (chat with no subcommand)
 program.action(async () => {
+  // Check if setup is needed
+  if (isSetupNeeded()) {
+    console.log(chalk.cyan("First-time setup detected. Running setup wizard..."));
+    await runSetupWizard();
+    return;
+  }
+
   // Default to starting chat when no arguments provided
   const chatCommand = program.commands.find((cmd: any) => cmd.name() === "chat");
   if (chatCommand) {

@@ -49,3 +49,7 @@ coverage/
 reference/
 PLAN.md
 FEATURE_DUAL_DEFAULT_MODELS.md
+anthropic-sdk-typescript.md
+llmsfull.txt
+tests/API_Configuration_Guide.md
+API.md

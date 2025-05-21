@@ -32,6 +32,11 @@ export interface BibbleConfig {
       baseUrl: string;
       defaultModel: string;
       requiresApiKey: boolean;
+    },
+    anthropic?: {
+      apiKey?: string;
+      baseUrl: string;
+      defaultModel: string;
     }
   };
   ui: {
@@ -48,7 +53,6 @@ export interface BibbleConfig {
   chat: {
     saveHistory: boolean;
     maxHistoryItems: number;
-    systemPrompt: string;
     userGuidelines?: string;
   };
   models: Array<{
@@ -60,6 +64,13 @@ export interface BibbleConfig {
     maxCompletionTokens?: number;
     reasoningEffort?: "low" | "medium" | "high";
     isReasoningModel?: boolean;
+    thinking?: boolean | {
+      type: "enabled";
+      budget_tokens: number;
+    };
+    thinkingBudgetTokens?: number;
+    topP?: number;
+    topK?: number;
   }>;
 }
 
@@ -75,8 +86,13 @@ export const defaultConfig: BibbleConfig = {
     openaiCompatible: {
       apiKey: undefined,
       baseUrl: "",
-      defaultModel: "gpt-3.5-turbo",
+      defaultModel: "gpt-4o",
       requiresApiKey: false
+    },
+    anthropic: {
+      apiKey: undefined,
+      baseUrl: "https://api.anthropic.com",
+      defaultModel: "claude-3-7-sonnet-20250219"
     }
   },
   ui: {
@@ -87,9 +103,10 @@ export const defaultConfig: BibbleConfig = {
   chat: {
     saveHistory: true,
     maxHistoryItems: 50,
-    systemPrompt: "You are bibble, a helpful and friendly AI assistant."
+    userGuidelines: ""
   },
   models: [
+    // OpenAI models
     {
       id: "gpt-4.1",
       provider: "openai",
@@ -177,6 +194,43 @@ export const defaultConfig: BibbleConfig = {
       maxTokens: 4096,
       temperature: 0.7,
       isReasoningModel: false
+    },
+
+    // Anthropic models
+    {
+      id: "claude-3-7-sonnet-20250219",
+      provider: "anthropic",
+      name: "Claude 3.7 Sonnet",
+      maxTokens: 4096,
+      temperature: 0.7,
+      thinking: {
+        type: "enabled",
+        budget_tokens: 16000
+      },
+      thinkingBudgetTokens: 16000,
+      topP: 0.9,
+      topK: 40
+    },
+    {
+      id: "claude-3-5-sonnet-20241022",
+      provider: "anthropic",
+      name: "Claude 3.5 Sonnet",
+      maxTokens: 4096,
+      temperature: 0.7,
+    },
+    {
+      id: "claude-3-5-haiku-20241022",
+      provider: "anthropic",
+      name: "Claude 3.5 Haiku",
+      maxTokens: 4096,
+      temperature: 0.7,
+    },
+    {
+      id: "claude-3-opus-20240229",
+      provider: "anthropic",
+      name: "Claude 3 Opus",
+      maxTokens: 4096,
+      temperature: 0.7,
     }
   ]
 };

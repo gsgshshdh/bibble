@@ -1,28 +1,51 @@
-﻿import OpenAI from "openai";
-import { Config } from "../config/config.js";
-import { ChatCompletionParams, StreamChunk, ChatMessage, MessageRole } from "../types.js";
+﻿
+import { Config } from "../config/config.js"; // Adjust the path if needed
+import OpenAI from "openai"; // Add this import for OpenAI
 
-// OpenAI client options
-interface OpenAIClientOptions {
+// Import ChatMessage and other related types
+import type { ChatMessage, StreamChunk, ChatCompletionParams } from "../types.js";
+import { MessageRole } from "../types.js";
+
+// LLM client options
+interface LlmClientOptions {
   apiKey?: string;
   baseURL?: string;
   provider?: string;
 }
+
+import { AnthropicClient } from "./anthropic.js";
 
 /**
  * LLM Client for interacting with language models
  */
 export class LlmClient {
   private config = Config.getInstance();
-  private openaiClient: OpenAI;
+  private openaiClient: OpenAI | null = null;
+  private anthropicClient: AnthropicClient | null = null;
   private provider: string = "openai";
 
-  constructor(options: OpenAIClientOptions = {}) {
+  constructor(options: LlmClientOptions = {}) {
     // Get the default provider or use the one specified in options
     this.provider = options.provider || this.config.getDefaultProvider();
 
-    // Check if using openaiCompatible provider
-    if (this.provider === "openaiCompatible") {
+    // Initialize the appropriate client based on the provider
+    if (this.provider === "anthropic") {
+      // Get API key from options or config
+      const apiKey = options.apiKey || this.config.getApiKey("anthropic");
+
+      if (!apiKey) {
+        throw new Error("Anthropic API key is required. Please set it in the configuration or provide it in the options.");
+      }
+
+      // Get base URL from options or config
+      const baseURL = options.baseURL || this.config.get("apis.anthropic.baseUrl");
+
+      // Create Anthropic client
+      this.anthropicClient = new AnthropicClient({
+        apiKey,
+        baseUrl: baseURL,
+      });
+    } else if (this.provider === "openaiCompatible") {
       // Get base URL from options or config
       const baseURL = options.baseURL || this.config.get("apis.openaiCompatible.baseUrl", "");
       const requiresApiKey = this.config.get("apis.openaiCompatible.requiresApiKey", true);
@@ -118,51 +141,93 @@ export class LlmClient {
    * @returns Async generator of stream chunks
    */
   async chatCompletion(params: ChatCompletionParams): Promise<AsyncGenerator<StreamChunk>> {
-    // Convert messages to OpenAI format
-    const openaiMessages = this.convertMessagesToOpenAIFormat(params.messages);
+    // Use the appropriate client based on the provider
+    if (this.provider === "anthropic" && this.anthropicClient) {
+      // Get model config
+      const modelConfig = this.config.getModelConfig(params.model);
 
-    // Check if this is a reasoning model (o-series)
-    const isReasoningModel = this.isReasoningModel(params.model);
+      // Prepare Anthropic request parameters
+      const requestParams: any = {
+        model: params.model,
+        messages: params.messages,
+        tools: params.tools,
+        maxTokens: params.maxTokens || modelConfig?.maxTokens || 4096,
+        temperature: params.temperature || modelConfig?.temperature || 0.7,
+        abortSignal: params.abortSignal,
+        stream: true
+      };
 
-    // Prepare request parameters based on model type
-    const requestParams: any = {
-      model: params.model,
-      messages: openaiMessages,
-      stream: true,
-      tools: params.tools,
-      tool_choice: "auto",
-    };
+      // Add Anthropic-specific parameters
+      if (params.topP !== undefined || modelConfig?.topP !== undefined) {
+        requestParams.topP = params.topP || modelConfig?.topP;
+      }
 
-    // Add parameters based on model type
-    if (isReasoningModel) {
-      // For o-series models, use reasoning_effort and max_completion_tokens
-      if (params.reasoningEffort) {
-        requestParams.reasoning_effort = params.reasoningEffort;
+      if (params.topK !== undefined || modelConfig?.topK !== undefined) {
+        requestParams.topK = params.topK || modelConfig?.topK;
+      }
+
+      // Add thinking parameter for Claude 3.7 Sonnet
+      if (params.model.includes("claude-3-7")) {
+        if (params.thinking !== undefined || modelConfig?.thinking !== undefined) {
+          requestParams.thinking = params.thinking || modelConfig?.thinking;
+        }
+      }
+
+      if (params.stopSequences) {
+        requestParams.stopSequences = params.stopSequences;
+      }
+
+      // Call Anthropic client's chatCompletion method
+      return this.anthropicClient.chatCompletion(requestParams);
+    } else if (this.openaiClient) {
+      // Convert messages to OpenAI format
+      const openaiMessages = this.convertMessagesToOpenAIFormat(params.messages);
+
+      // Check if this is a reasoning model (o-series)
+      const isReasoningModel = this.isReasoningModel(params.model);
+
+      // Prepare request parameters based on model type
+      const requestParams: any = {
+        model: params.model,
+        messages: openaiMessages,
+        stream: true,
+        tools: params.tools,
+        tool_choice: "auto",
+      };
+
+      // Add parameters based on model type
+      if (isReasoningModel) {
+        // For o-series models, use reasoning_effort and max_completion_tokens
+        if (params.reasoningEffort) {
+          requestParams.reasoning_effort = params.reasoningEffort;
+        } else {
+          requestParams.reasoning_effort = "medium"; // Default to medium if not specified
+        }
+
+        if (params.maxCompletionTokens) {
+          requestParams.max_completion_tokens = params.maxCompletionTokens;
+        }
       } else {
-        requestParams.reasoning_effort = "medium"; // Default to medium if not specified
+        // For GPT models, use temperature and max_tokens
+        if (params.temperature !== undefined) {
+          requestParams.temperature = params.temperature;
+        }
+
+        if (params.maxTokens !== undefined) {
+          requestParams.max_tokens = params.maxTokens;
+        }
       }
 
-      if (params.maxCompletionTokens) {
-        requestParams.max_completion_tokens = params.maxCompletionTokens;
-      }
+      // Send request to OpenAI
+      const response = await this.openaiClient.chat.completions.create(requestParams, {
+        signal: params.abortSignal,
+      });
+
+      // Create and return async generator
+      return this.processStreamResponse(response);
     } else {
-      // For GPT models, use temperature and max_tokens
-      if (params.temperature !== undefined) {
-        requestParams.temperature = params.temperature;
-      }
-
-      if (params.maxTokens !== undefined) {
-        requestParams.max_tokens = params.maxTokens;
-      }
+      throw new Error("No LLM client initialized");
     }
-
-    // Send request to OpenAI
-    const response = await this.openaiClient.chat.completions.create(requestParams, {
-      signal: params.abortSignal,
-    });
-
-    // Create and return async generator
-    return this.processStreamResponse(response);
   }
 
   /**
@@ -178,8 +243,8 @@ export class LlmClient {
     const isOSeries = /^o\d/.test(normalizedModelId);
 
     // Also check the model configuration
-    const models = this.config.get("models", []);
-    const modelConfig = models.find(m => m.id.toLowerCase() === normalizedModelId);
+    const models = this.config.get("models", []) as Array<{ id: string; isReasoningModel?: boolean }>;
+    const modelConfig = models.find((m) => m.id.toLowerCase() === normalizedModelId);
 
     return isOSeries || (modelConfig?.isReasoningModel === true);
   }
