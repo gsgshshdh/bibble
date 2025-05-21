@@ -8,14 +8,17 @@ Bibble is a command-line interface (CLI) chatbot application that integrates wit
 
 Bibble provides a terminal-based interface for interacting with AI language models, with support for:
 
-- Chat sessions with OpenAI models (GPT-3.5 Turbo, GPT-4)
+- Chat sessions with OpenAI models (GPT-4.1, o4-mini, etc)
 - Tool use through the Model Context Protocol (MCP)
-- Configuration management
-- Chat history tracking and management
+- Configuration management with dot-notation access
+- Chat history tracking, export, and import
 - Markdown rendering in the terminal
-- Colored text output
+- Colored text output with customizable settings
 - Real-time response streaming
 - Contextual multi-turn conversations
+- Multiple model support with model-specific parameters
+- User guidelines for customizing AI behavior
+- Built-in control flow tools (task_complete, ask_question)
 
 ## Architecture
 
@@ -71,13 +74,21 @@ Bibble uses Commander.js to create a command-line interface with several command
 
 ### Configuration Management
 
-Configuration is stored in a `.bibble` directory in the user's home directory, including:
+Configuration is stored in a `.bibble` directory in the user's home directory, managed by the `Config` class which provides a singleton interface for accessing and modifying settings. The configuration includes:
 
 - API keys for LLM providers
 - Default model settings
-- UI preferences
+- UI preferences (color output, markdown rendering)
 - MCP server configurations
 - User guidelines
+- Model definitions with specific parameters
+
+The configuration system supports:
+- Dot-notation access to nested properties
+- Default values for missing properties
+- Secure storage of API keys
+- JSON serialization and deserialization
+- Command-line management via `bibble config` commands
 
 ### LLM Integration
 
@@ -86,20 +97,39 @@ Bibble integrates with OpenAI's API to provide chat functionality, supporting di
 - Chat completion requests
 - Streaming responses
 - Message format conversion
+- Tool integration
+- Model-specific parameters
+
+The application supports both traditional OpenAI models and the newer o-series models (o1, o1-pro, o3, o3-mini, o4-mini), automatically adjusting parameters based on the model type:
+- Traditional models use `temperature` and `maxTokens` parameters
+- O-series models use `reasoningEffort` and `maxCompletionTokens` parameters
+
+### Agent Implementation
+
+The `Agent` class is the core component that manages conversations and tool usage:
+
+- Extends the `McpClient` class to inherit tool management capabilities
+- Uses a hardcoded `DEFAULT_SYSTEM_PROMPT` for consistent behavior
+- Supports configurable user guidelines as additional instructions
+- Implements a conversation loop with a maximum number of turns
+- Handles tool calls and responses
+- Provides built-in control flow tools:
+  - `task_complete`: Called when the task is complete
+  - `ask_question`: Called when the agent needs more information
 
 ### MCP Client
 
 Bibble functions as an MCP client, allowing it to connect to MCP-compatible servers and use their tools. The MCP implementation includes:
 
-- `Agent` class for managing conversations with tools
-  - Agent is encouraged to use thorough problem-solving
-  - Supports configurable user guidelines as additional instructions
-  - Uses a hardcoded DEFAULT_SYSTEM_PROMPT for consistent behavior
 - `McpClient` class for connecting to MCP servers
   - Manages connections to multiple MCP servers
   - Handles tool discovery and registration
   - Routes tool calls to appropriate servers
 - Tool handling for passing to LLM and processing responses
+  - Formats tool definitions for LLM context
+  - Processes tool calls from LLM responses
+  - Routes tool calls to appropriate servers
+  - Formats tool results for LLM context
 
 ### Terminal UI
 
@@ -186,18 +216,24 @@ Bibble uses:
 #### From NPM
 
 ```bash
+# Install globally
 npm install -g @pinkpixel/bibble
+
+# Or use with npx
+npx @pinkpixel/bibble
 ```
 
 #### From Source
 
 ```bash
-git clone https://github.com/sizzlebop/bibble.git
+git clone https://github.com/pinkpixel-dev/bibble.git
 cd bibble
 npm install
 npm run build
 npm link  # Optional: to make the command available globally
 ```
+
+The package is published on npm as `@pinkpixel/bibble` and includes all necessary dependencies. It's compatible with Node.js v18 and later.
 
 ### Configuration
 
@@ -281,6 +317,25 @@ npm run dev
 ### Adding New Commands
 
 To add a new command, create a new file in the `src/commands/` directory and implement the command using Commander.js. Then import and register the command in `src/index.ts`.
+
+### Entry Points and Binary Files
+
+The `bin` directory contains the entry point scripts for the CLI:
+
+- `bibble.js` - Main ESM entry script
+- `bibble-cli.js` - ESM compatibility wrapper
+- `bibble-cli.cjs` - CommonJS compatibility wrapper
+- `bibble.cmd` - Windows command file
+
+The package.json defines the binary entry point:
+
+```json
+"bin": {
+  "bibble": "./bin/bibble-cli.cjs"
+}
+```
+
+This structure ensures compatibility across different Node.js environments and operating systems.
 
 ## License
 
