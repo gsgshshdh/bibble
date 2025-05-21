@@ -34,22 +34,51 @@ export function setupChatCommand(program: Command): void {
           }
         }
 
-        // Check API key
-        const apiKey = config.getApiKey("openai");
-        if (!apiKey) {
-          // Prompt for API key
-          const { apiKey: newApiKey } = await inquirer.prompt([
-            {
-              type: "password",
-              name: "apiKey",
-              message: "Please enter your OpenAI API key:",
-              validate: (input) => input.trim().length > 0 || "API key is required",
-            },
-          ]);
+        // Get the default provider
+        const defaultProvider = config.getDefaultProvider();
 
-          // Save API key
-          config.setApiKey("openai", newApiKey);
-          console.log(terminal.success("API key saved successfully."));
+        // Check if we need to prompt for API key based on the provider
+        if (defaultProvider === "openai") {
+          // Check API key for OpenAI
+          const apiKey = config.getApiKey("openai");
+          if (!apiKey) {
+            // Prompt for API key
+            const { apiKey: newApiKey } = await inquirer.prompt([
+              {
+                type: "password",
+                name: "apiKey",
+                message: "Please enter your OpenAI API key:",
+                validate: (input) => input.trim().length > 0 || "API key is required",
+              },
+            ]);
+
+            // Save API key
+            config.setApiKey("openai", newApiKey);
+            console.log(terminal.success("API key saved successfully."));
+          }
+        } else if (defaultProvider === "openaiCompatible") {
+          // Check if the OpenAI-compatible endpoint requires an API key
+          const requiresApiKey = config.get("apis.openaiCompatible.requiresApiKey", true);
+
+          if (requiresApiKey) {
+            // Check API key for OpenAI-compatible endpoint
+            const apiKey = config.get("apis.openaiCompatible.apiKey");
+            if (!apiKey) {
+              // Prompt for API key
+              const { apiKey: newApiKey } = await inquirer.prompt([
+                {
+                  type: "password",
+                  name: "apiKey",
+                  message: "Please enter your API key for the OpenAI-compatible endpoint:",
+                  validate: (input) => input.trim().length > 0 || "API key is required",
+                },
+              ]);
+
+              // Save API key
+              config.set("apis.openaiCompatible.apiKey", newApiKey);
+              console.log(terminal.success("API key saved successfully."));
+            }
+          }
         }
 
         // Start chat UI

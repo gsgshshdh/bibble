@@ -1,10 +1,10 @@
-﻿import { 
-  BibbleConfig, 
-  defaultConfig, 
-  loadConfig, 
-  saveConfig, 
-  getValueByPath, 
-  setValueByPath 
+﻿import {
+  BibbleConfig,
+  defaultConfig,
+  loadConfig,
+  saveConfig,
+  getValueByPath,
+  setValueByPath
 } from "./storage.js";
 
 /**
@@ -55,20 +55,20 @@ export class Config {
   public delete(key: string): void {
     const keys = key.split(".");
     const lastKey = keys.pop();
-    
+
     if (!lastKey) {
       return;
     }
-    
+
     let current = this.config;
-    
+
     for (const k of keys) {
       if (current[k] === undefined || current[k] === null) {
         return;
       }
       current = current[k];
     }
-    
+
     delete current[lastKey];
     saveConfig(this.config);
   }
@@ -115,18 +115,41 @@ export class Config {
   }
 
   /**
-   * Get the default model ID
+   * Get the default provider
    */
-  public getDefaultModel(): string {
-    return this.get("apis.openai.defaultModel");
+  public getDefaultProvider(): string {
+    return this.get("defaultProvider", "openai");
+  }
+
+  /**
+   * Set the default provider
+   * @param provider The provider name
+   */
+  public setDefaultProvider(provider: string): void {
+    this.set("defaultProvider", provider);
+  }
+
+  /**
+   * Get the default model ID
+   * @param provider The provider name (if not provided, uses the default provider)
+   */
+  public getDefaultModel(provider?: string): string {
+    // Use specified provider or get the default provider
+    const providerName = provider || this.getDefaultProvider();
+
+    // Get the model for the provider
+    return this.get(`apis.${providerName}.defaultModel`);
   }
 
   /**
    * Set the default model ID
    * @param modelId The model ID
+   * @param provider The provider name (default: "openai")
    */
-  public setDefaultModel(modelId: string): void {
-    this.set("apis.openai.defaultModel", modelId);
+  public setDefaultModel(modelId: string, provider?: string): void {
+    // Use specified provider or default to openai
+    const providerName = provider || "openai";
+    this.set(`apis.${providerName}.defaultModel`, modelId);
   }
 
   /**

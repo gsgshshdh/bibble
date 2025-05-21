@@ -20,11 +20,18 @@ export function ensureConfigDirExists(): void {
 
 // Configuration type
 export interface BibbleConfig {
+  defaultProvider: string;
   apis: {
     openai: {
       apiKey?: string;
       baseUrl: string;
       defaultModel: string;
+    },
+    openaiCompatible?: {
+      apiKey?: string;
+      baseUrl: string;
+      defaultModel: string;
+      requiresApiKey: boolean;
     }
   };
   ui: {
@@ -58,11 +65,18 @@ export interface BibbleConfig {
 
 // Default configuration
 export const defaultConfig: BibbleConfig = {
+  defaultProvider: "openai",
   apis: {
     openai: {
       apiKey: undefined,
       baseUrl: "https://api.openai.com/v1",
       defaultModel: "o4-mini"
+    },
+    openaiCompatible: {
+      apiKey: undefined,
+      baseUrl: "",
+      defaultModel: "gpt-3.5-turbo",
+      requiresApiKey: false
     }
   },
   ui: {

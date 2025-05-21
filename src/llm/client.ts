@@ -6,6 +6,7 @@ import { ChatCompletionParams, StreamChunk, ChatMessage, MessageRole } from "../
 interface OpenAIClientOptions {
   apiKey?: string;
   baseURL?: string;
+  provider?: string;
 }
 
 /**
@@ -14,23 +15,61 @@ interface OpenAIClientOptions {
 export class LlmClient {
   private config = Config.getInstance();
   private openaiClient: OpenAI;
+  private provider: string = "openai";
 
   constructor(options: OpenAIClientOptions = {}) {
-    // Get API key from options or config
-    const apiKey = options.apiKey || this.config.getApiKey("openai");
+    // Get the default provider or use the one specified in options
+    this.provider = options.provider || this.config.getDefaultProvider();
 
-    if (!apiKey) {
-      throw new Error("OpenAI API key is required. Please set it in the configuration or provide it in the options.");
+    // Check if using openaiCompatible provider
+    if (this.provider === "openaiCompatible") {
+      // Get base URL from options or config
+      const baseURL = options.baseURL || this.config.get("apis.openaiCompatible.baseUrl", "");
+      const requiresApiKey = this.config.get("apis.openaiCompatible.requiresApiKey", true);
+
+      if (!baseURL) {
+        throw new Error("Base URL for OpenAI-compatible endpoint is required. Please configure it using 'bibble config openai-compatible'.");
+      }
+
+      if (requiresApiKey) {
+        // Get API key from options or config
+        const apiKey = options.apiKey || this.config.get("apis.openaiCompatible.apiKey");
+
+        if (!apiKey) {
+          throw new Error("API key for OpenAI-compatible endpoint is required. Please configure it using 'bibble config openai-compatible'.");
+        }
+
+        // Create OpenAI client with API key
+        this.openaiClient = new OpenAI({
+          apiKey,
+          baseURL,
+        });
+      } else {
+        // Create OpenAI client without API key
+        this.openaiClient = new OpenAI({
+          apiKey: "dummy-key", // OpenAI client requires a non-empty string
+          baseURL,
+          dangerouslyAllowBrowser: true
+        });
+      }
+    } else {
+      // Use standard OpenAI provider
+      // Get API key from options or config
+      const apiKey = options.apiKey || this.config.getApiKey("openai");
+
+      if (!apiKey) {
+        throw new Error("OpenAI API key is required. Please set it in the configuration or provide it in the options.");
+      }
+
+      // Get base URL from options or config
+      const baseURL = options.baseURL || this.config.get("apis.openai.baseUrl");
+
+      // Create OpenAI client
+      this.openaiClient = new OpenAI({
+        apiKey,
+        baseURL,
+      });
     }
-
-    // Get base URL from options or config
-    const baseURL = options.baseURL || this.config.get("apis.openai.baseUrl");
-
-    // Create OpenAI client
-    this.openaiClient = new OpenAI({
-      apiKey,
-      baseURL,
-    });
   }
 
   /**

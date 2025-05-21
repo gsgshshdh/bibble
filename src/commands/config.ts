@@ -132,6 +132,111 @@ export function setupConfigCommand(program: Command): void {
       console.log(terminal.success(`API key for ${provider} saved successfully.`));
     });
 
+  // Set default provider
+  configCommand
+    .command("default-provider")
+    .description("Set the default provider to use")
+    .action(async () => {
+      // Get available providers
+      const providers = ["openai"];
+
+      // Check if openaiCompatible is configured
+      const openaiCompatibleBaseUrl = config.get("apis.openaiCompatible.baseUrl", "");
+      if (openaiCompatibleBaseUrl) {
+        providers.push("openaiCompatible");
+      }
+
+      // Get current default provider
+      const currentProvider = config.getDefaultProvider();
+
+      // Prompt for provider
+      const { provider } = await inquirer.prompt([
+        {
+          type: "list",
+          name: "provider",
+          message: "Select default provider:",
+          choices: providers,
+          default: currentProvider,
+        },
+      ]);
+
+      // Save provider
+      config.setDefaultProvider(provider);
+      console.log(terminal.success(`Default provider set to ${provider}.`));
+    });
+
+  // Setup OpenAI-compatible endpoint
+  configCommand
+    .command("openai-compatible")
+    .description("Set up an OpenAI-compatible endpoint")
+    .action(async () => {
+      const { baseUrl } = await inquirer.prompt([
+        {
+          type: "input",
+          name: "baseUrl",
+          message: "Enter the base URL for the OpenAI-compatible endpoint:",
+          validate: (input) => input.trim().length > 0 || "Base URL is required",
+        },
+      ]);
+
+      const { requiresApiKey } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "requiresApiKey",
+          message: "Does this endpoint require an API key?",
+          default: false,
+        },
+      ]);
+
+      let apiKey;
+      if (requiresApiKey) {
+        const response = await inquirer.prompt([
+          {
+            type: "password",
+            name: "apiKey",
+            message: "Enter API key for the endpoint:",
+            validate: (input) => input.trim().length > 0 || "API key is required",
+          },
+        ]);
+        apiKey = response.apiKey;
+      }
+
+      const { defaultModel } = await inquirer.prompt([
+        {
+          type: "input",
+          name: "defaultModel",
+          message: "Enter the default model ID for this endpoint:",
+          default: "gpt-3.5-turbo",
+          validate: (input) => input.trim().length > 0 || "Model ID is required",
+        },
+      ]);
+
+      // Save configuration
+      config.set("apis.openaiCompatible.baseUrl", baseUrl);
+      config.set("apis.openaiCompatible.requiresApiKey", requiresApiKey);
+      if (requiresApiKey && apiKey) {
+        config.set("apis.openaiCompatible.apiKey", apiKey);
+      }
+      config.set("apis.openaiCompatible.defaultModel", defaultModel);
+
+      // Ask if the user wants to set this as the default provider
+      const { setAsDefault } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "setAsDefault",
+          message: "Do you want to set this as the default provider?",
+          default: false,
+        },
+      ]);
+
+      if (setAsDefault) {
+        config.setDefaultProvider("openaiCompatible");
+        console.log(terminal.success("Default provider set to openaiCompatible."));
+      }
+
+      console.log(terminal.success("OpenAI-compatible endpoint configured successfully."));
+    });
+
   // Configure MCP servers
   configCommand
     .command("mcp-servers")
