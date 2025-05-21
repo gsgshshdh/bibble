@@ -128,6 +128,16 @@ export class McpClient {
    * @param toolArgs Tool arguments
    */
   async callTool(toolName: string, toolArgs: any): Promise<{ content: string }> {
+    // Handle built-in tools
+    if (toolName === "task_complete") {
+      return this.handleTaskComplete();
+    }
+
+    if (toolName === "ask_question") {
+      return this.handleAskQuestion();
+    }
+
+    // Handle MCP server tools
     const client = this.clients.get(toolName);
 
     if (!client) {
@@ -168,6 +178,26 @@ export class McpClient {
         content: `Error executing tool ${toolName}: ${error instanceof Error ? error.message : String(error)}`
       };
     }
+  }
+
+  /**
+   * Handle the task_complete built-in tool
+   * @returns Tool result
+   */
+  private handleTaskComplete(): Promise<{ content: string }> {
+    return Promise.resolve({
+      content: "Task completed successfully. The assistant has finished the requested task."
+    });
+  }
+
+  /**
+   * Handle the ask_question built-in tool
+   * @returns Tool result
+   */
+  private handleAskQuestion(): Promise<{ content: string }> {
+    return Promise.resolve({
+      content: "Question acknowledged. Please provide the requested information."
+    });
   }
 
   /**
