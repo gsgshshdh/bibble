@@ -82,21 +82,67 @@ export class LlmClient {
     // Convert messages to OpenAI format
     const openaiMessages = this.convertMessagesToOpenAIFormat(params.messages);
 
-    // Send request to OpenAI
-    const response = await this.openaiClient.chat.completions.create({
+    // Check if this is a reasoning model (o-series)
+    const isReasoningModel = this.isReasoningModel(params.model);
+
+    // Prepare request parameters based on model type
+    const requestParams: any = {
       model: params.model,
       messages: openaiMessages,
-      temperature: params.temperature,
-      max_tokens: params.maxTokens,
       stream: true,
       tools: params.tools,
       tool_choice: "auto",
-    }, {
+    };
+
+    // Add parameters based on model type
+    if (isReasoningModel) {
+      // For o-series models, use reasoning_effort and max_completion_tokens
+      if (params.reasoningEffort) {
+        requestParams.reasoning_effort = params.reasoningEffort;
+      } else {
+        requestParams.reasoning_effort = "medium"; // Default to medium if not specified
+      }
+
+      if (params.maxCompletionTokens) {
+        requestParams.max_completion_tokens = params.maxCompletionTokens;
+      }
+    } else {
+      // For GPT models, use temperature and max_tokens
+      if (params.temperature !== undefined) {
+        requestParams.temperature = params.temperature;
+      }
+
+      if (params.maxTokens !== undefined) {
+        requestParams.max_tokens = params.maxTokens;
+      }
+    }
+
+    // Send request to OpenAI
+    const response = await this.openaiClient.chat.completions.create(requestParams, {
       signal: params.abortSignal,
     });
 
     // Create and return async generator
     return this.processStreamResponse(response);
+  }
+
+  /**
+   * Check if a model is a reasoning model (o-series)
+   * @param modelId Model ID to check
+   * @returns True if the model is a reasoning model
+   */
+  private isReasoningModel(modelId: string): boolean {
+    // Normalize model ID to lowercase for consistent comparison
+    const normalizedModelId = modelId.toLowerCase();
+
+    // Check if the model ID starts with 'o' followed by a number or is explicitly marked as a reasoning model
+    const isOSeries = /^o\d/.test(normalizedModelId);
+
+    // Also check the model configuration
+    const models = this.config.get("models", []);
+    const modelConfig = models.find(m => m.id.toLowerCase() === normalizedModelId);
+
+    return isOSeries || (modelConfig?.isReasoningModel === true);
   }
 
   /**

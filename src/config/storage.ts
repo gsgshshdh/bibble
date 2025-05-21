@@ -12,7 +12,7 @@ export function ensureConfigDirExists(): void {
   if (!fs.existsSync(CONFIG_DIR)) {
     fs.mkdirSync(CONFIG_DIR, { recursive: true });
   }
-  
+
   if (!fs.existsSync(HISTORY_DIR)) {
     fs.mkdirSync(HISTORY_DIR, { recursive: true });
   }
@@ -50,6 +50,9 @@ export interface BibbleConfig {
     name: string;
     maxTokens?: number;
     temperature?: number;
+    maxCompletionTokens?: number;
+    reasoningEffort?: "low" | "medium" | "high";
+    isReasoningModel?: boolean;
   }>;
 }
 
@@ -59,7 +62,7 @@ export const defaultConfig: BibbleConfig = {
     openai: {
       apiKey: undefined,
       baseUrl: "https://api.openai.com/v1",
-      defaultModel: "gpt-3.5-turbo"
+      defaultModel: "o4-mini"
     }
   },
   ui: {
@@ -74,18 +77,92 @@ export const defaultConfig: BibbleConfig = {
   },
   models: [
     {
-      id: "gpt-3.5-turbo",
+      id: "gpt-4.1",
       provider: "openai",
-      name: "GPT-3.5 Turbo",
-      maxTokens: 2048,
-      temperature: 0.7
+      name: "GPT-4.1",
+      maxTokens: 4096,
+      temperature: 0.7,
+      isReasoningModel: false
     },
     {
-      id: "gpt-4",
+      id: "o4-mini",
       provider: "openai",
-      name: "GPT-4",
+      name: "o4-mini",
+      maxCompletionTokens: 4096,
+      reasoningEffort: "medium",
+      isReasoningModel: true
+    },
+    {
+      id: "o3",
+      provider: "openai",
+      name: "o3",
+      maxCompletionTokens: 4096,
+      reasoningEffort: "medium",
+      isReasoningModel: true
+    },
+    {
+      id: "o3-mini",
+      provider: "openai",
+      name: "o3-mini",
+      maxCompletionTokens: 4096,
+      reasoningEffort: "medium",
+      isReasoningModel: true
+    },
+    {
+      id: "o1",
+      provider: "openai",
+      name: "o1",
+      maxCompletionTokens: 4096,
+      reasoningEffort: "medium",
+      isReasoningModel: true
+    },
+    {
+      id: "o1-pro",
+      provider: "openai",
+      name: "o1-pro",
+      maxCompletionTokens: 4096,
+      reasoningEffort: "medium",
+      isReasoningModel: true
+    },
+    {
+      id: "gpt-4o",
+      provider: "openai",
+      name: "GPT-4o",
       maxTokens: 4096,
-      temperature: 0.7
+      temperature: 0.7,
+      isReasoningModel: false
+    },
+    {
+      id: "chatgpt-4o",
+      provider: "openai",
+      name: "ChatGPT-4o",
+      maxTokens: 4096,
+      temperature: 0.7,
+      isReasoningModel: false
+    },
+    {
+      id: "gpt-4.1-mini",
+      provider: "openai",
+      name: "GPT-4.1 mini",
+      maxTokens: 4096,
+      temperature: 0.7,
+      isReasoningModel: false
+    },
+    {
+      id: "gpt-4.1-nano",
+      provider: "openai",
+      name: "GPT-4.1 nano",
+      maxTokens: 4096,
+      temperature: 0.7,
+      isReasoningModel: false
+    },
+    {
+      id: "gpt-4o-mini",
+      provider: "openai",
+      name: "GPT-4o mini",
+      maxTokens: 4096,
+      temperature: 0.7,
+      isReasoningModel: false
     }
   ]
 };
@@ -98,7 +175,7 @@ export function loadConfig(): BibbleConfig {
   if (!fs.existsSync(CONFIG_FILE)) {
     return defaultConfig;
   }
-  
+
   try {
     const content = fs.readFileSync(CONFIG_FILE, "utf8");
     return JSON.parse(content) as BibbleConfig;
@@ -130,14 +207,14 @@ export function saveConfig(config: BibbleConfig): void {
 export function getValueByPath<T>(obj: any, path: string, defaultValue?: T): T {
   const keys = path.split(".");
   let current = obj;
-  
+
   for (const key of keys) {
     if (current === undefined || current === null) {
       return defaultValue as T;
     }
     current = current[key];
   }
-  
+
   return (current === undefined) ? (defaultValue as T) : (current as T);
 }
 
@@ -150,19 +227,19 @@ export function getValueByPath<T>(obj: any, path: string, defaultValue?: T): T {
 export function setValueByPath(obj: any, path: string, value: any): void {
   const keys = path.split(".");
   const lastKey = keys.pop();
-  
+
   if (!lastKey) {
     return;
   }
-  
+
   let current = obj;
-  
+
   for (const key of keys) {
     if (current[key] === undefined || current[key] === null) {
       current[key] = {};
     }
     current = current[key];
   }
-  
+
   current[lastKey] = value;
 }

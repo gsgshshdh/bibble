@@ -42,7 +42,7 @@ If you have an idea for a new feature, please create an issue with:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/username/bibble.git
+   git clone https://github.com/sizzlebop/bibble.git
    cd bibble
    ```
 

@@ -192,13 +192,41 @@ export class Agent extends McpClient {
     // Create combined tools list with exit loop tools
     const tools = [...this.availableTools, ...options.exitLoopTools];
 
-    // Stream response from LLM
-    const stream = await this.llmClient.chatCompletion({
+    // Get model configuration
+    const models = this.configInstance.get<Array<{
+      id: string;
+      provider: string;
+      name: string;
+      maxTokens?: number;
+      temperature?: number;
+      maxCompletionTokens?: number;
+      reasoningEffort?: "low" | "medium" | "high";
+      isReasoningModel?: boolean;
+    }>>("models", []);
+
+    const modelConfig = models.find(m => m.id.toLowerCase() === options.model.toLowerCase());
+
+    // Prepare chat completion parameters
+    const chatParams = {
       model: options.model,
       messages: this.messages,
       tools,
       abortSignal: options.abortSignal,
-    });
+    } as any;
+
+    // Add model-specific parameters
+    if (modelConfig) {
+      if (modelConfig.isReasoningModel) {
+        chatParams.reasoningEffort = modelConfig.reasoningEffort || "medium";
+        chatParams.maxCompletionTokens = modelConfig.maxCompletionTokens;
+      } else {
+        chatParams.temperature = modelConfig.temperature;
+        chatParams.maxTokens = modelConfig.maxTokens;
+      }
+    }
+
+    // Stream response from LLM
+    const stream = await this.llmClient.chatCompletion(chatParams);
 
     let responseText = "";
     let firstChunk = true;

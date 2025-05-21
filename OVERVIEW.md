@@ -2,6 +2,8 @@
 
 Bibble is a command-line interface (CLI) chatbot application that integrates with language models and supports the Model Context Protocol (MCP) for enhanced functionality through external tools.
 
+*Last updated: May 21, 2025*
+
 ## Project Overview
 
 Bibble provides a terminal-based interface for interacting with AI language models, with support for:
@@ -92,7 +94,11 @@ Bibble functions as an MCP client, allowing it to connect to MCP-compatible serv
 - `Agent` class for managing conversations with tools
   - Agent is encouraged to use thorough problem-solving
   - Supports configurable user guidelines as additional instructions
+  - Uses a hardcoded DEFAULT_SYSTEM_PROMPT for consistent behavior
 - `McpClient` class for connecting to MCP servers
+  - Manages connections to multiple MCP servers
+  - Handles tool discovery and registration
+  - Routes tool calls to appropriate servers
 - Tool handling for passing to LLM and processing responses
 
 ### Terminal UI
@@ -180,13 +186,13 @@ Bibble uses:
 #### From NPM
 
 ```bash
-npm install -g bibble
+npm install -g @pinkpixel/bibble
 ```
 
 #### From Source
 
 ```bash
-git clone https://github.com/username/bibble.git
+git clone https://github.com/sizzlebop/bibble.git
 cd bibble
 npm install
 npm run build

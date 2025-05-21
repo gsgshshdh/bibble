@@ -39,6 +39,7 @@ Thumbs.db
 
 # User configuration
 .bibble/
+config.json
 
 # Test coverage
 coverage/

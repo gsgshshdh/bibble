@@ -27,14 +27,14 @@ export interface ChatMessage {
 }
 
 // Stream chunk types
-export type StreamChunk = 
+export type StreamChunk =
   | { type: "text"; text: string }
-  | { 
-      type: "tool_call"; 
-      toolCall: { 
-        id: string; 
-        name: string; 
-        args: any; 
+  | {
+      type: "tool_call";
+      toolCall: {
+        id: string;
+        name: string;
+        args: any;
       }
     };
 
@@ -45,6 +45,9 @@ export interface ChatCompletionParams {
   tools?: any[];
   temperature?: number;
   maxTokens?: number;
+  maxCompletionTokens?: number;
+  reasoningEffort?: "low" | "medium" | "high";
+  isReasoningModel?: boolean;
   abortSignal?: AbortSignal;
 }
 
