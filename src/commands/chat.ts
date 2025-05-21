@@ -56,6 +56,24 @@ export function setupChatCommand(program: Command): void {
             config.setApiKey("openai", newApiKey);
             console.log(terminal.success("API key saved successfully."));
           }
+        } else if (defaultProvider === "anthropic") {
+          // Check API key for Anthropic
+          const apiKey = config.getApiKey("anthropic");
+          if (!apiKey) {
+            // Prompt for API key
+            const { apiKey: newApiKey } = await inquirer.prompt([
+              {
+                type: "password",
+                name: "apiKey",
+                message: "Please enter your Anthropic API key:",
+                validate: (input) => input.trim().length > 0 || "API key is required",
+              },
+            ]);
+
+            // Save API key
+            config.setApiKey("anthropic", newApiKey);
+            console.log(terminal.success("API key saved successfully."));
+          }
         } else if (defaultProvider === "openaiCompatible") {
           // Check if the OpenAI-compatible endpoint requires an API key
           const requiresApiKey = config.get("apis.openaiCompatible.requiresApiKey", true);

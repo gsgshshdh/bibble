@@ -43,12 +43,26 @@ export interface ChatCompletionParams {
   model: string;
   messages: ChatMessage[];
   tools?: any[];
+  // Common parameters
   temperature?: number;
   maxTokens?: number;
+  abortSignal?: AbortSignal;
+  stream?: boolean;
+
+  // OpenAI specific parameters
   maxCompletionTokens?: number;
   reasoningEffort?: "low" | "medium" | "high";
   isReasoningModel?: boolean;
-  abortSignal?: AbortSignal;
+
+  // Anthropic specific parameters
+  thinking?: boolean | {
+    type: "enabled";
+    budget_tokens: number;
+  };
+  thinkingBudgetTokens?: number;
+  topP?: number;
+  topK?: number;
+  stopSequences?: string[];
 }
 
 // Chat history entry

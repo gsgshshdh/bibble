@@ -63,13 +63,11 @@ export class Config {
     let current = this.config;
 
     for (const k of keys) {
-      if (current[k] === undefined || current[k] === null) {
-        return;
-      }
-      current = current[k];
+      if ((current as any)[k] === undefined || (current as any)[k] === null) { return; }
+current = (current as any)[k];
     }
 
-    delete current[lastKey];
+    delete (current as any)[lastKey];
     saveConfig(this.config);
   }
 
@@ -153,21 +151,6 @@ export class Config {
   }
 
   /**
-   * Get the system prompt
-   */
-  public getSystemPrompt(): string {
-    return this.get("chat.systemPrompt");
-  }
-
-  /**
-   * Set the system prompt
-   * @param prompt The system prompt
-   */
-  public setSystemPrompt(prompt: string): void {
-    this.set("chat.systemPrompt", prompt);
-  }
-
-  /**
    * Get the user guidelines
    */
   public getUserGuidelines(): string | undefined {
@@ -207,5 +190,61 @@ export class Config {
     const servers = this.getMcpServers();
     const filteredServers = servers.filter(s => s.name !== serverName);
     this.set("mcpServers", filteredServers);
+  }
+
+  /**
+   * Get the model configuration
+   * @param modelId Model ID
+   * @returns Model configuration or undefined if not found
+   */
+  public getModelConfig(modelId: string): any {
+    const models = this.get("models", []);
+    const model = models.find((model: any) => model.id === modelId);
+
+    if (!model) {
+      // If model not found, try to determine the provider from the model ID
+      if (modelId.startsWith("claude-")) {
+        // For Anthropic models, return default configuration
+        const config = {
+          provider: "anthropic",
+          maxTokens: 4096,
+          temperature: 0.7,
+          topP: 0.9,
+          topK: 40
+        };
+
+        // Add thinking parameter for Claude 3.7 models
+        if (modelId.includes("3-7")) {
+          return {
+            ...config,
+            thinking: {
+              type: "enabled",
+              budget_tokens: 16000
+            },
+            thinkingBudgetTokens: 16000
+          };
+        }
+
+        return config;
+      } else if (modelId.startsWith("o")) {
+        // For OpenAI o-series models, return default configuration
+        return {
+          provider: "openai",
+          maxCompletionTokens: 4096,
+          reasoningEffort: "medium",
+          isReasoningModel: true
+        };
+      } else {
+        // For other OpenAI models, return default configuration
+        return {
+          provider: "openai",
+          maxTokens: 4096,
+          temperature: 0.7,
+          isReasoningModel: false
+        };
+      }
+    }
+
+    return model;
   }
 }

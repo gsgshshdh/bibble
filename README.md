@@ -7,12 +7,12 @@
 [![npm version](https://img.shields.io/npm/v/@pinkpixel/bibble.svg)](https://www.npmjs.com/package/@pinkpixel/bibble)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
-Bibble is a command-line interface (CLI) chatbot application built in TypeScript that runs directly in your terminal. It supports OpenAI and OpenAI-compatible API endpoints, implements real-time response streaming, maintains chat memory, and functions as an MCP (Model Context Protocol) client.
+Bibble is a command-line interface (CLI) chatbot application built in TypeScript that runs directly in your terminal. It supports OpenAI, Anthropic, and OpenAI-compatible API endpoints, implements real-time response streaming, maintains chat memory, and functions as an MCP (Model Context Protocol) client.
 
 ## Features
 
 - Launch as a chat instance via the CLI command `bibble`
-- Support for OpenAI and OpenAI-compatible API endpoints
+- Support for OpenAI, Anthropic (Claude models), and OpenAI-compatible API endpoints
 - Real-time response streaming of model output
 - Contextual multi-turn conversations with chat memory
 - MCP client functionality for connecting to MCP-compatible servers
@@ -104,7 +104,6 @@ bibble history
 - `bibble config reset` - Reset configuration to defaults
 - `bibble config api-key` - Set up API key for a provider
 - `bibble config mcp-servers` - Manage MCP server configurations
-- `bibble config system-prompt` - Configure system prompt
 - `bibble config user-guidelines` - Configure user guidelines
 
 ### History commands
@@ -134,7 +133,7 @@ Bibble stores its configuration in a `.bibble` directory in your home directory.
 - Default model settings
 - UI preferences
 - MCP server configurations
-- System prompts and user guidelines
+- User guidelines (additional instructions for the AI)
 
 ## MCP Integration
 
