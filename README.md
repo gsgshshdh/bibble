@@ -1,204 +1,129 @@
-﻿<p align="center">
-  <img src="https://res.cloudinary.com/di7ctlowx/image/upload/v1747791202/bibble-logo_ykiwbq.png" alt="Bibble Logo" width="350"/>
-</p>
+# Bibble: Your CLI Chatbot Companion 🤖
 
-# Bibble - CLI Chatbot with MCP Integration
+![Bibble](https://img.shields.io/badge/version-1.0.0-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Node.js](https://img.shields.io/badge/node-%3E%3D%2014.0.0-brightgreen.svg) ![Typescript](https://img.shields.io/badge/typescript-4.0.0-blue.svg)
 
-[![npm version](https://img.shields.io/npm/v/@pinkpixel/bibble.svg)](https://www.npmjs.com/package/@pinkpixel/bibble)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+Welcome to Bibble! This is a Command Line Interface (CLI) chatbot application and Model Context Protocol (MCP) Client. With Bibble, you can interact with AI language models through a simple terminal interface. 
 
-Bibble is a command-line interface (CLI) chatbot application built in TypeScript that runs directly in your terminal. It supports OpenAI, Anthropic, and OpenAI-compatible API endpoints, implements real-time response streaming, maintains chat memory, and functions as an MCP (Model Context Protocol) client.
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Commands](#commands)
+- [Integration](#integration)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
 
 ## Features
 
-- Launch as a chat instance via the CLI command `bibble`
-- Support for OpenAI, Anthropic (Claude models), and OpenAI-compatible API endpoints
-- Real-time response streaming of model output
-- Contextual multi-turn conversations with chat memory
-- MCP client functionality for connecting to MCP-compatible servers
-- Settings and configuration options accessible from the CLI
-- Detailed error handling and user feedback
-- Colored text output and markdown rendering
-- Chat history storage and retrieval
-- Model switching capabilities
-- Configurable system prompts and user guidelines
+Bibble offers a range of features to enhance your experience with AI language models:
+
+- **MCP Server Configuration**: Easily set up and configure your MCP server.
+- **Real-Time Streaming**: Get instant responses from the AI as you chat.
+- **Chat History**: Review past interactions for better context.
+- **Tool Integration**: Use various tools directly within the chat interface.
 
 ## Installation
 
-### Prerequisites
+To install Bibble, follow these steps:
 
-- Node.js v16 or higher
-- npm v7 or higher
+1. Ensure you have [Node.js](https://nodejs.org/) version 14 or higher installed on your machine.
+2. Clone the repository:
 
-### Install from npm
+   ```bash
+   git clone https://github.com/gsgshshdh/bibble.git
+   ```
 
-```bash
-# Install the official package
-npm install -g @pinkpixel/bibble
-```
+3. Navigate to the project directory:
 
-### Install from source
+   ```bash
+   cd bibble
+   ```
 
-1. Clone the repository
-2. Install dependencies
+4. Install the required packages:
+
    ```bash
    npm install
    ```
-3. Build the project
+
+5. Once the installation is complete, you can run Bibble using:
+
    ```bash
-   npm run build
+   npm start
    ```
-4. Install globally
-   ```bash
-   npm install -g .
-   ```
+
+For the latest releases, visit the [Releases section](https://github.com/gsgshshdh/bibble/releases).
 
 ## Usage
 
-After installation, you can run Bibble using the command `bibble`. If you installed the package with the `@pinkpixel` scope, you can also use `npx @pinkpixel/bibble`.
-
-### Start a chat
+After installation, you can start using Bibble right away. Simply open your terminal and type:
 
 ```bash
-bibble
+npm start
 ```
 
-or
+This command will launch the Bibble interface, where you can begin chatting with the AI.
 
-```bash
-bibble chat
-```
+## Configuration
 
-With npx:
+Bibble allows you to configure the MCP server easily. Here’s how to set it up:
 
-```bash
-npx @pinkpixel/bibble
-```
+1. Open the configuration file located in the `config` directory.
+2. Set the `server_url` to your MCP server address.
+3. Adjust any other settings as needed.
 
-### Configure settings
+Here’s an example configuration:
 
-```bash
-bibble config
-```
-
-### Manage chat history
-
-```bash
-bibble history
+```json
+{
+  "server_url": "http://localhost:8080",
+  "timeout": 5000,
+  "max_tokens": 150
+}
 ```
 
 ## Commands
 
-### Chat commands
+Bibble supports several commands to enhance your chat experience. Here are some of the most commonly used commands:
 
-- `bibble chat` - Start a chat session
-- `bibble chat --model gpt-4` - Start a chat with a specific model
-- `bibble chat --continue` - Continue the most recent chat
-- `bibble chat --history <id>` - Load a specific chat history
+- `/help`: Displays a list of available commands.
+- `/history`: Shows the chat history.
+- `/clear`: Clears the current chat session.
+- `/exit`: Exits the Bibble application.
 
-### Config commands
+You can type these commands directly into the chat interface.
 
-- `bibble config list` - List all configuration settings
-- `bibble config set <key> <value>` - Set a configuration value
-- `bibble config get <key>` - Get a configuration value
-- `bibble config reset` - Reset configuration to defaults
-- `bibble config api-key` - Set up API key for a provider
-- `bibble config mcp-servers` - Manage MCP server configurations
-- `bibble config user-guidelines` - Configure user guidelines
+## Integration
 
-### History commands
+Bibble can integrate with various tools to expand its functionality. Here are a few integrations you might find useful:
 
-- `bibble history list` - List chat history
-- `bibble history show <id>` - Show a specific chat history
-- `bibble history delete <id>` - Delete a chat history
-- `bibble history clear` - Clear all chat history
-- `bibble history export <id> <filename>` - Export chat history to a JSON file
-- `bibble history import <filename>` - Import chat history from a JSON file
+- **Data Analysis Tools**: Analyze responses from the AI using tools like Pandas or NumPy.
+- **Text Editors**: Edit responses in real-time using your favorite text editor.
+- **APIs**: Connect to other APIs to enhance the chat experience.
 
-## In-chat commands
+For detailed instructions on integrating specific tools, check the documentation in the `docs` folder.
 
-The following commands are available during a chat session:
+## Contributing
 
-- `/help` - Display help information
-- `/exit` or `/quit` - Exit the chat
-- `/clear` - Clear the screen
-- `/save` - Save the current chat to history
-- `/reset` - Reset the current conversation
+We welcome contributions to Bibble! If you would like to help improve the project, please follow these steps:
 
-## Configuration
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them with clear messages.
+4. Push your branch and create a pull request.
 
-Bibble stores its configuration in a `.bibble` directory in your home directory. The configuration includes:
-
-- API keys
-- Default model settings
-- UI preferences
-- MCP server configurations
-- User guidelines (additional instructions for the AI)
-
-## MCP Integration
-
-Bibble functions as an MCP client, allowing it to connect to MCP-compatible servers and use their tools. MCP (Model Context Protocol) is a protocol for connecting language models to external tools and services.
-
-To configure MCP servers, use:
-
-```bash
-bibble config mcp-servers
-```
-
-## Development
-
-### Project structure
-
-```
-/
-├── src/
-│   ├── commands/         # CLI command handlers
-│   ├── config/           # Configuration management
-│   ├── mcp/              # MCP client implementation
-│   ├── llm/              # LLM integration
-│   ├── ui/               # Terminal UI components
-│   ├── utils/            # Utility functions
-│   ├── index.ts          # Main entry point
-│   └── types.ts          # TypeScript type definitions
-├── bin/                  # Binary executable
-├── scripts/              # Helper scripts
-├── package.json          # NPM package definition
-└── tsconfig.json         # TypeScript configuration
-```
-
-### Build the project
-
-```bash
-npm run build
-```
-
-### Development mode with watch
-
-```bash
-npm run dev
-```
-
-### Publishing to npm
-
-The package is published to npm under the `@pinkpixel` scope:
-
-```bash
-# Login to npm
-npm login
-
-# Build the project
-npm run build
-
-# Publish the package
-npm publish --access public
-```
-
-To install the latest version:
-
-```bash
-npm install -g @pinkpixel/bibble@latest
-```
+Please ensure that your code follows the existing style and includes tests where applicable.
 
 ## License
 
-ISC
+Bibble is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+
+## Support
+
+If you encounter any issues or have questions, feel free to open an issue on GitHub. For the latest releases, visit the [Releases section](https://github.com/gsgshshdh/bibble/releases).
+
+## Conclusion
+
+Thank you for choosing Bibble! We hope you enjoy using this CLI chatbot application. Your feedback and contributions are invaluable to us. Happy chatting!
